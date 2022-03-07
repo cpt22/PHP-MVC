@@ -2,11 +2,23 @@
 $BASE_ROUTE = "index";
 
 $routes = array(
+
     "index" => array(
-        "GET" => "index"
+        "collection" => array (
+            "GET" => "index"
+        ),
+        "member" => array (
+            "GET" => "show"
+        )
     ),
+
     "products" => array(
-        "GET" => "index"
+        "collection" => array (
+            "GET" => "index"
+        ),
+        "member" => array (
+            "GET" => "show"
+        )
     )
 );
 ?>

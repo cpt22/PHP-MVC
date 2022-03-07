@@ -1,0 +1,1 @@
+<p><?php echo $dog_name; ?></p>

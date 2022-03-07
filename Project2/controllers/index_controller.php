@@ -1,5 +1,7 @@
 <?php
-function index() {
-    echo "you hit the index method";
-}
+$SELECTED_LAYOUT = "template";
+
+function index() {}
+
+function show() {}
 ?>
