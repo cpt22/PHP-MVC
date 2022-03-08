@@ -1,12 +1,33 @@
 <?php
 use JetBrains\PhpStorm\NoReturn;
 
-require_once 'db/connect.php';
+require_once 'db/db.php';
+require_once 'config.php';
 require_once 'util/logger.php';
 require_once 'routes.php';
-require_once 'config.php';
+// Database utilities
+require_once 'db/db.php';
+// Load Renderers
+require_once 'util/renderers.php';
 
 $logger = new Logger();
+$db = new DB();
+
+require_once 'models/product.php';
+
+//$p1 = Product::create(array("quantity" => 200));
+//print_r($p1);
+//$product = new Product();
+//$product->quantity = 45;
+//$product->save();
+//print_r($product);
+print_r(Product::find(30));
+$stmt = $db->connection->prepare("SELECT * FROM products WHERE (id=?)");
+$id = "id";
+$th = 20;
+$stmt->bind_param("s", $th);
+$stmt->execute();
+print_r($stmt->get_result());
 
 // Extract the request uri and set the default route if necessary
 $stripped_uri = $_SERVER['REDIRECT_URL'];
@@ -21,7 +42,8 @@ if (!array_key_exists($route, $routes)) { $logger->log_error(code: 404, message:
 
 $is_member = false;
 $member_id = null;
-if (count($uri_components) > 1 && preg_match("/^[0-9]*/", $uri_components[1])) {
+if (count($uri_components) > 1 && preg_match("/^[0-9]*/", $uri_components[1]))
+{
     $is_member = true;
     $member_id = $uri_components[1];
     $_GET['id'] = $member_id;
@@ -48,24 +70,16 @@ include_once 'helpers/helpers.php';
 $helpers_route = "helpers/" . $route . "_helpers.php";
 if (file_exists($helpers_route)) { include_once $helpers_route; }
 
-// Load Renderers
-require_once 'util/renderers.php';
-
-$params = array_merge($_GET, $_POST);
+// TODO: Might not need
+$params = $_REQUEST;
 
 // Call the action method.
 $render_called = false;
 ($action)();
 
-if (!$render_called) {
+if (!$render_called)
+{
     $top_view_partial = $route . "/" . $action;
     render($top_view_partial);
 }
-
-//// Generate a 404 message with supplied message
-//#[NoReturn] function error_page(int $code = 404, string $message = "404 Page not Found") {
-//    echo $message;
-//    http_response_code($code);
-//    die();
-//}
 ?>
