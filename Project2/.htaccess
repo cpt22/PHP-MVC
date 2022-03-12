@@ -1,3 +1,3 @@
 RewriteEngine on
 #RewriteRule ^(.*)$ 404.html [NC,L,QSA]
-RewriteRule ^([^\.]*)$ processor.php [NC,L,QSA]
+RewriteRule ^([^\.]*)$ backend/loader.php [NC,L,QSA]

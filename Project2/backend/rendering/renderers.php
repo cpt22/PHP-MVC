@@ -14,7 +14,7 @@ function render_layout(string $file, array $locals = array()) {
     }
 
     ob_start();
-    require "views/layouts/" . $file . $TEMPLATE_EXTENSION;
+    require $GLOBALS['APP_BASE'] . "views/layouts/" . $file . $TEMPLATE_EXTENSION;
     $layout .= ob_get_contents();
     ob_end_clean();
 
@@ -38,7 +38,7 @@ function render(string $file, array $locals = array()) {
     }
 
     ob_start();
-    require "views/" . $file . $TEMPLATE_EXTENSION;
+    require $GLOBALS['APP_BASE'] . "views/" . $file . $TEMPLATE_EXTENSION;
     $contents .= ob_get_contents();
     ob_end_clean();
 
@@ -66,7 +66,7 @@ function render_partial(string $partial, array $locals = array(), bool $output =
     }
 
     ob_start();
-    require "views/" . $partial;
+    require $GLOBALS['APP_BASE'] . "views/" . $partial;
     $contents .=ob_get_contents();
     ob_end_clean();
 
@@ -100,7 +100,7 @@ function render_partial_collection(string $partial, array $collection, string $a
         ${$as} = $object;
 
         ob_start();
-        include "views/" . $partial;
+        include $GLOBALS['APP_BASE'] . "views/" . $partial;
         $contents .= ob_get_contents();
         ob_end_clean();
 

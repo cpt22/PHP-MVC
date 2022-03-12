@@ -1,5 +1,5 @@
 <?php
-require_once 'dbconfig.php';
+require_once $GLOBALS['APP_BASE'] . "db/dbconfig.php";
 
 class DB
 {

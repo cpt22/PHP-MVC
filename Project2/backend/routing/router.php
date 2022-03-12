@@ -1,33 +1,7 @@
 <?php
 use JetBrains\PhpStorm\NoReturn;
 
-require_once 'db/db.php';
-require_once 'config.php';
-require_once 'util/logger.php';
-require_once 'routes.php';
-// Database utilities
-require_once 'db/db.php';
-// Load Renderers
-require_once 'util/renderers.php';
-
-$logger = new Logger();
-$db = new DB();
-
-require_once 'models/product.php';
-
-//$p1 = Product::create(array("quantity" => 200));
-//print_r($p1);
-//$product = new Product();
-//$product->quantity = 45;
-//$product->save();
-//print_r($product);
-print_r(Product::find(30));
-$stmt = $db->connection->prepare("SELECT * FROM products WHERE (id=?)");
-$id = "id";
-$th = 20;
-$stmt->bind_param("s", $th);
-$stmt->execute();
-print_r($stmt->get_result());
+require_once $APP_BASE . "config/routes.php";
 
 // Extract the request uri and set the default route if necessary
 $stripped_uri = $_SERVER['REDIRECT_URL'];
@@ -57,7 +31,7 @@ $method = $_POST['REQUEST_METHOD'] ?? $_SERVER['REQUEST_METHOD'];
 if (!array_key_exists($method, $route_block)) { $logger->log_error(code: 404, message: "Method not supported for route $route"); }
 
 $action = $route_block[$method];
-$controller_file = "controllers/" . $route . "_controller.php";
+$controller_file = $APP_BASE . "controllers/" . $route . "_controller.php";
 // Ensure that the appropriate controllers exists.
 if (!file_exists($controller_file)) { $logger->log_error(code: 404, message: "No <b>$route</b> controller defined."); }
 require_once $controller_file;
@@ -67,7 +41,7 @@ if (!is_callable($action)) { $logger->log_error(code: 404, message: "No method d
 
 // Bring in helper methods
 include_once 'helpers/helpers.php';
-$helpers_route = "helpers/" . $route . "_helpers.php";
+$helpers_route = $APP_BASE . "helpers/" . $route . "_helpers.php";
 if (file_exists($helpers_route)) { include_once $helpers_route; }
 
 // TODO: Might not need
@@ -79,7 +53,7 @@ $render_called = false;
 
 if (!$render_called)
 {
-    $top_view_partial = $route . "/" . $action;
+    $top_view_partial =  $route . "/" . $action;
     render($top_view_partial);
 }
 ?>

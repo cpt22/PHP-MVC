@@ -1,6 +1,5 @@
 <?php
-require_once 'codes.php';
-
+require_once 'http_codes.php';
 class Logger {
     function log_error(int $code, string $message = null) {
         global $LOG_MODE, $HTTP_CODES, $TEMPLATE_EXTENSION;
