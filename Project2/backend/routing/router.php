@@ -20,7 +20,7 @@ if (count($uri_components) > 1 && preg_match("/^[0-9]*/", $uri_components[1]))
 {
     $is_member = true;
     $member_id = $uri_components[1];
-    $_GET['id'] = $member_id;
+    $_REQUEST['id'] = $member_id;
 }
 
 $route_block = $routes[$route][$is_member ? "member" : "collection"];

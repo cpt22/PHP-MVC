@@ -86,7 +86,7 @@ abstract class Model
         $query = "SELECT COLUMN_NAME AS cn FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'".self::table_name()."'";
         $result = $db->query($query);
         $fields = array();
-        while ($row = $result->fetch_assoc())
+        foreach ($result->fetchAll(mode: PDO::FETCH_ASSOC) as $row)
         {
             $field = $row['cn'];
             if ($field != "id")
@@ -130,9 +130,14 @@ abstract class Model
             return null;
         }
 
-        $result = $db->select(table: self::table_name(), substitutions: array("attr" => $attribute, "val" => $value),
-            where_conditions: array(":attr=:val"));
-        print_r($result['result']);
+        $result = $db->select(table: self::table_name(), substitutions: array("val" => $value),
+            where_conditions: array("$attribute < :val"), limit: 1);
+        $class_name = get_called_class();
+        $obj = new $class_name();
+        foreach ($result->fetch(mode: PDO::FETCH_ASSOC) as $column => $value) {
+            $obj->{$column} = $value;
+        }
+        return $obj;
     }
 
     //public function select(string $table, array $fields = array(), array $substitutions = array(), string $joins = "",

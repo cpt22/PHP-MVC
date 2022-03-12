@@ -14,18 +14,10 @@ class DB
         require_once $GLOBALS['APP_BASE'] . "db/dbconfig.php";
         $dsn = "mysql:host=$DB_HOSTNAME;dbname=$DB_DB;charset=UTF8";
         try {
-            $this->connection = new PDO($dsn, $user, $password);
-            if ($pdo) {
-                echo "Connected to the $db database successfully!";
-            }
+            $this->connection = new PDO($dsn, $DB_USER, $DB_PASSWORD, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         } catch (PDOException $e) {
             echo $e->getMessage();
         }
-        $this->connection = mysqli_connect($DB_HOSTNAME, $DB_USER, $DB_PASSWORD, $DB_DB);
-        if($this->connection->connect_error) {
-            exit('Error connecting to database');
-        }
-        $this->connection->set_charset("utf8mb4");
     }
 
 
@@ -39,7 +31,7 @@ class DB
 
 
     public function select(string $table, array $fields = array(), array $substitutions = array(), string $joins = "",
-                           array $join_tables = array(), $where_conditions = array(), $where_operator = "AND")
+                           array $join_tables = array(), $where_conditions = array(), $where_operator = "AND", $limit = null)
     {
         global $logger;
         if (empty($fields))
@@ -49,7 +41,7 @@ class DB
 
         $where = $this->generate_where(conditions: $where_conditions, operator: $where_operator);
 
-        $query = "SELECT $fields FROM $table $joins $where";
+        $query = "SELECT $fields FROM $table $joins $where" . (isset($limit) ? " LIMIT $limit" : "") ;
         return $this->prepare($query, $substitutions);
     }
 
@@ -97,22 +89,14 @@ class DB
 
     public function prepare(string $query, array $kvs)
     {
-        // Extract all replacement keys and order their valuse
-        $symbols = null;
-        preg_match_all("/:+[a-zA-Z0-9]*/", $query, $symbols);
-        $query = preg_replace("/:+[a-zA-Z0-9]*/", "?", $query);
-        $values = array();
-        foreach ($symbols[0] as $symbol)
-        {
-            $values[] = $kvs[substr($symbol, 1)];
+        $vals = array();
+        foreach ($kvs as $key => $value) {
+            $vals[":$key"] = $value;
         }
 
-        $types = str_repeat("s", count($values));
-        $stmt = $this->connection->prepare($query) or die(mysqli_error($this->connection));
-        $stmt->bind_param($types, ...$values);
-        $stmt->execute();
-        print_r($stmt);
-        return array("result" => $stmt->get_result(), "stmt" => $stmt);
+        $statement = $this->connection->prepare($query);
+        $statement->execute($kvs);
+        return $statement;
     }
 
 

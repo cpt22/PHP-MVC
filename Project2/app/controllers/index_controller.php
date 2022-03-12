@@ -1,7 +1,7 @@
 <?php
 $SELECTED_LAYOUT = "template";
 
-class IndexController {
+class IndexController extends Controller {
     public function __construct() {
 
     }
@@ -9,9 +9,7 @@ class IndexController {
     public function index() {}
 
     public function show() {
-        phpinfo();
-        $dog = Product::find(2);
-        print_r($dog);
+        print_r(Product::find($_REQUEST['id']));
     }
 }
 
