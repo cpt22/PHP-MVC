@@ -1,7 +1,15 @@
 <?php
 $SELECTED_LAYOUT = "template";
 
-function index() {}
+class IndexController {
+    public function __construct() {
 
-function show() {}
+    }
+
+    public function index() {}
+
+    public function show() {
+    }
+}
+
 ?>

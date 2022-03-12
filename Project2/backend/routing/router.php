@@ -36,8 +36,11 @@ $controller_file = $APP_BASE . "controllers/" . $route . "_controller.php";
 if (!file_exists($controller_file)) { $logger->log_error(code: 404, message: "No <b>$route</b> controller defined."); }
 require_once $controller_file;
 
+$ctlr_class_name = ucfirst($route) . "Controller";
+$controller = new $ctlr_class_name;
+
 // Check that the appropriate action function exists and is callable.
-if (!is_callable($action)) { $logger->log_error(code: 404, message: "No method defined for <b>$action</b> in <b>$route</b> controller."); }
+if (!is_callable(array($controller, $action))) { $logger->log_error(code: 404, message: "No method defined for <b>$action</b> in <b>$route</b> controller."); }
 
 // Bring in helper methods
 include_once 'helpers/helpers.php';
@@ -49,7 +52,7 @@ $params = $_REQUEST;
 
 // Call the action method.
 $render_called = false;
-($action)();
+$controller->{$action}();
 
 if (!$render_called)
 {

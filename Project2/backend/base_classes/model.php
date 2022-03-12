@@ -98,6 +98,7 @@ abstract class Model
         $this->db_fields = $fields;
     }
 
+    // TODO: Fix return types and error handling
     public function save()
     {
         global $db;
