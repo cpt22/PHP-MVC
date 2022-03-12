@@ -1,5 +1,4 @@
 <?php
-require_once $GLOBALS['APP_BASE'] . "db/dbconfig.php";
 
 class DB
 {
@@ -12,7 +11,16 @@ class DB
 
     private function connect()
     {
-        global $DB_HOSTNAME, $DB_USER, $DB_PASSWORD, $DB_DB;
+        require_once $GLOBALS['APP_BASE'] . "db/dbconfig.php";
+        $dsn = "mysql:host=$DB_HOSTNAME;dbname=$DB_DB;charset=UTF8";
+        try {
+            $this->connection = new PDO($dsn, $user, $password);
+            if ($pdo) {
+                echo "Connected to the $db database successfully!";
+            }
+        } catch (PDOException $e) {
+            echo $e->getMessage();
+        }
         $this->connection = mysqli_connect($DB_HOSTNAME, $DB_USER, $DB_PASSWORD, $DB_DB);
         if($this->connection->connect_error) {
             exit('Error connecting to database');
@@ -30,7 +38,6 @@ class DB
 
 
 
-
     public function select(string $table, array $fields = array(), array $substitutions = array(), string $joins = "",
                            array $join_tables = array(), $where_conditions = array(), $where_operator = "AND")
     {
@@ -43,7 +50,6 @@ class DB
         $where = $this->generate_where(conditions: $where_conditions, operator: $where_operator);
 
         $query = "SELECT $fields FROM $table $joins $where";
-        print_r($query);
         return $this->prepare($query, $substitutions);
     }
 
@@ -76,9 +82,6 @@ class DB
         $query = "UPDATE " . $table . " SET $field_str $where";
         return $this->prepare($query, kvs: $values);
     }
-
-    //public function query_processor(string $query, array $kvs)
-
 
 
 

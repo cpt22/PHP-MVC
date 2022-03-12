@@ -9,6 +9,9 @@ class IndexController {
     public function index() {}
 
     public function show() {
+        phpinfo();
+        $dog = Product::find(2);
+        print_r($dog);
     }
 }
 
