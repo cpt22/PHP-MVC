@@ -86,7 +86,7 @@ function render_partial(string $partial, array $locals = array(), bool $output =
  * @return string|void
  * Renders a collection of objects using the provided partial
  */
-function render_partial_collection(string $partial, array $collection, string $as, array $locals = array(), bool $output = true) {
+function render_partial_collection(string $partial, $collection, string $as, array $locals = array(), bool $output = true) {
     global $params;
     $contents = '';
     $partial = fix_partial_path($partial);

@@ -1,0 +1,4 @@
+<?php
+trait HasValidations {
+
+}

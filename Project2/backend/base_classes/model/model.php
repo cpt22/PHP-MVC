@@ -1,14 +1,14 @@
 <?php
 abstract class Model
 {
-    public int $id;
+    use HasAssociations;
 
-    protected array $db_fields = array();
+    public int $id;
 
     function __construct()
     {
-        //$this->load_attributes();
     }
+
 
     /**
      * @return string
@@ -26,12 +26,6 @@ abstract class Model
     public static function model_name(): string
     {
         return get_called_class();
-    }
-
-
-    private function load()
-    {
-
     }
 
     public static function get_attributes(): array
@@ -104,6 +98,7 @@ abstract class Model
         return $class;
     }
 
+
     private static function make_proxy() { return new AssociationProxy(table_name: self::table_name(), model_name: self::model_name()); }
     public static function where(array $conditions, array $values) { return self::make_proxy()->where($conditions, $values); }
     public static function group(string $group) { return self::make_proxy()->group($group); }
@@ -111,5 +106,6 @@ abstract class Model
     public static function limit(int $limit) { return self::make_proxy()->limit($limit); }
     public static function includes($includes) { return self::make_proxy()->includes($includes); }
     public static function pluck($fields) { return self::make_proxy()->pluck($fields); }
+    public static function all() { return self::make_proxy()->all; }
 }
 ?>

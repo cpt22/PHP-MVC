@@ -1,8 +1,10 @@
 <?php
-class AssociationProxy implements ArrayAccess {
+class AssociationProxy implements ArrayAccess, Iterator {
 
     private string $table_name;
     private string $model_name;
+
+    private int $pointer = 0;
 
     private array $wheres = [
         "conditions" => [],
@@ -31,32 +33,29 @@ class AssociationProxy implements ArrayAccess {
         return "Association Proxy Object: " . $this->query;
     }
 
-    public function __call($name, $arguments)
-    {
-        echo "Calling object method '$name' "
-            . implode(', ', $arguments). "\n";
-    }
-
     public function __get($key)
     {
-        echo "Getting property '$key'";
         switch($key)
         {
+            case "all":
+                $this->construct_query();
+                return $this;
             case "count":
                 $this->count = true;
                 $this->construct_query();
                 return;
         }
-        if (!$this->hasLoaded)
-        {
-            $this->hasLoaded = true;
-            $this->load_objects();
-        }
+        if (!$this->hasLoaded) { $this->load_objects(); }
         return $this->objects[$key];
     }
 
     public function __isset ($key) {
         return isset($this->objects[$key]);
+    }
+
+    public function load(): AssociationProxy {
+        $this->load_objects();
+        return $this;
     }
 
     public function where(array $conditions, array $values): AssociationProxy
@@ -115,10 +114,12 @@ class AssociationProxy implements ArrayAccess {
         foreach ($this->objects as $object) {
             $store->store($this->model_name, $object->id, $object);
         }
+        $this->hasLoaded = true;
     }
 
     public function construct_query(): String
     {
+        $this->hasLoaded = false;
         // Create fields
         $fields = "";
         if ($this->count)
@@ -173,7 +174,7 @@ class AssociationProxy implements ArrayAccess {
     }
 
 
-    /*
+    /**
      * Array access methods
      */
     public function offsetExists($offset) {
@@ -181,11 +182,7 @@ class AssociationProxy implements ArrayAccess {
     }
 
     public function offsetGet($offset) {
-        if (!$this->hasLoaded)
-        {
-            $this->hasLoaded = true;
-            $this->load_objects();
-        }
+        if (!$this->hasLoaded) { $this->load_objects(); }
         return $this->offsetExists($offset) ? $this->objects[$offset] : null;
     }
 
@@ -201,5 +198,35 @@ class AssociationProxy implements ArrayAccess {
         if ($this->offsetExists($offset)) {
             unset($this->objects[$offset]);
         }
+    }
+
+    /**
+     * Iterator Methods
+     */
+    public function key() {
+        return $this->pointer;
+    }
+
+    public function current() {
+        if (!$this->hasLoaded) { $this->load_objects(); }
+        return $this->objects[$this->pointer];
+    }
+
+    public function next() {
+        $this->pointer++;
+    }
+
+    public function rewind() {
+        if (!$this->hasLoaded) { $this->load_objects(); }
+        $this->pointer = 0;
+    }
+
+    public function seek($position) {
+        $this->pointer = $position;
+    }
+
+    public function valid() {
+        if (!$this->hasLoaded) { $this->load_objects(); }
+        return isset($this->objects[$this->pointer]);
     }
 }

@@ -11,7 +11,7 @@ $GLOBALS['APP_BASE'] = $APP_BASE;
 require_once $APP_BASE . "config/config.php";
 
 // Load all relevant php files in backend
-$BACKEND_FOLDERS_TO_LOAD = array("base_classes", "db", "helpers", "models", "rendering", "util");
+$BACKEND_FOLDERS_TO_LOAD = array("db", "helpers", "rendering", "util", "traits", "base_classes");
 foreach ($BACKEND_FOLDERS_TO_LOAD as $folder) {
     recursive_load($BACKEND_BASE . $folder);
 }
@@ -40,6 +40,7 @@ require $BACKEND_BASE . "routing/router.php";
  * Recursively load php files
  */
 function recursive_load(string $base_path) {
+    if (!file_exists($base_path)) { throw new Exception("Error, could not find '$base_path'"); }
     $scanned_directory = array_diff(scandir($base_path), array('..', '.'));
     $base_path = $base_path . (str_ends_with($base_path, "/") ? "" : "/");
     foreach ($scanned_directory as $file) {
