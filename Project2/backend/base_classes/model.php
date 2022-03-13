@@ -1,17 +1,13 @@
 <?php
 abstract class Model
 {
-    public $id;
+    public int $id;
+
     protected array $db_fields = array();
 
-    function __construct(int $id = null)
+    function __construct()
     {
-        $this->id = $id;
-        $this->load_attributes();
-        if ($this->id != null) {
-            $this->load();
-        } else {
-        }
+        //$this->load_attributes();
     }
 
     /**
@@ -33,54 +29,12 @@ abstract class Model
     }
 
 
-
-//    public function load_attributes()
-//    {
-//        $result = query("SELECT COLUMN_NAME AS cn FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'".$this->table_name()."'");
-//        $fields = array("id");
-//        while ($row = $result->fetch_assoc()) {
-//            $field = $row['COLUMN_NAME'];
-//            if ($field != "id") {
-//                $this->{$field} = null;
-//                $fields[] = $field;
-//            }
-//        }
-//        $this->fields = $fields;
-//    }
-
-//    function load_values() {
-//
-//    }
-
-//    function save()
-//    {
-//        global $db;
-//        $values = array();
-//        foreach($this->attributes as $attr)
-//        {
-//            $values[] = $this->{$attr};
-//        }
-//
-//        $attrs_as_s = join(", ", $this->attributes);
-//        $vals_placeholder = str_repeat(",?", count($attrs_as_s));
-//        $types = str_repeat("s", count($attrs_as_s));
-//
-//        $table_name = table_name();
-//
-//        $stmt = $db->prepare("UPDATE $table_name SET ($attrs_as_s) VALUES ($vals_placeholder) WHERE id=$this->id");
-//        $stmt->bind_param($types, ...$values);
-//        $stmt->execute();
-//        $stmt->close();
-//    }
-
-
     private function load()
     {
 
     }
 
-
-    public function load_attributes()
+    public static function get_attributes(): array
     {
         global $db;
         $query = "SELECT COLUMN_NAME AS cn FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'".self::table_name()."'";
@@ -89,13 +43,9 @@ abstract class Model
         foreach ($result->fetchAll(mode: PDO::FETCH_ASSOC) as $row)
         {
             $field = $row['cn'];
-            if ($field != "id")
-            {
-                $this->{$field} = null;
-                $fields[] = $field;
-            }
+            $fields[] = $field;
         }
-        $this->db_fields = $fields;
+        return $fields;
     }
 
     // TODO: Fix return types and error handling
@@ -111,28 +61,24 @@ abstract class Model
         if (empty($this->id))
         {
             $result = $db->insert(table: self::table_name(), values: $values);
-            $this->id = $result['stmt']->insert_id;
-            print_r($result);
+            $this->id = $db->connection->lastInsertId();
             return true;
         }
 
         $result = $db->update(table: self::table_name(), fields: $this->db_fields, values: $values, where_conditions: array("id=$this->id"));
-        print_r($result);
         return true;
-
     }
 
     public static function find(mixed $value, string $attribute = "id")
     {
         global $db;
-        if (is_array($value))
-        {
+        if (is_array($value)) {
             return null;
         }
 
         $result = $db->select(table: self::table_name(), substitutions: array("val" => $value),
-            where_conditions: array("$attribute < :val"), limit: 1);
-        $class_name = get_called_class();
+            where_conditions: array("$attribute=:val"), limit: 1);
+        $class_name = self::model_name();
         $obj = new $class_name();
         foreach ($result->fetch(mode: PDO::FETCH_ASSOC) as $column => $value) {
             $obj->{$column} = $value;
@@ -140,15 +86,13 @@ abstract class Model
         return $obj;
     }
 
-    //public function select(string $table, array $fields = array(), array $substitutions = array(), string $joins = "",
-    //                           array $join_tables = array(), $where_conditions = array(), $where_operator = "AND")
 
     public static function create(array $attributes)
     {
         global $db;
 
         // Instantiate class
-        $class_name = get_called_class();
+        $class_name = self::model_name();
         $class = new $class_name();
 
         foreach ($attributes as $attr => $value) {
@@ -156,8 +100,16 @@ abstract class Model
         }
         $result = $db->insert(table: self::table_name(), values: $attributes);
 
-        $class->id = $result['stmt']->insert_id;
+        $class->id = $db->connection->lastInsertId();
         return $class;
     }
+
+    private static function make_proxy() { return new AssociationProxy(table_name: self::table_name(), model_name: self::model_name()); }
+    public static function where(array $conditions, array $values) { return self::make_proxy()->where($conditions, $values); }
+    public static function group(string $group) { return self::make_proxy()->group($group); }
+    public static function order(string $order) { return self::make_proxy()->order($order); }
+    public static function limit(int $limit) { return self::make_proxy()->limit($limit); }
+    public static function includes($includes) { return self::make_proxy()->includes($includes); }
+    public static function pluck($fields) { return self::make_proxy()->pluck($fields); }
 }
 ?>

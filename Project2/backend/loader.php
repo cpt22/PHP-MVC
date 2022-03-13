@@ -27,6 +27,10 @@ $logger = new Logger();
 // Create the DB
 $db = new DB();
 
+// Create the object store
+$store = new ObjectStore();
+$GLOBALS['store'] = $store;
+
 // Handoff to router
 require $BACKEND_BASE . "routing/router.php";
 

@@ -1,24 +1,25 @@
 <?php
 $BASE_ROUTE = "index";
 
-$routes = array(
+$routes = [
 
-    "index" => array(
-        "collection" => array (
+    "index" => [
+        "collection" => [
             "GET" => "index"
-        ),
-        "member" => array (
+        ],
+        "member" => [
             "GET" => "show"
-        )
-    ),
+        ]
+    ],
 
-    "products" => array(
-        "collection" => array (
-            "GET" => "index"
-        ),
-        "member" => array (
+    "products" => [
+        "collection" => [
+            "GET" => "index",
+            "POST" => "create"
+        ],
+        "member" => [
             "GET" => "show"
-        )
-    )
-);
+        ]
+    ]
+];
 ?>
