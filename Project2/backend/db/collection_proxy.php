@@ -1,5 +1,5 @@
 <?php
-class AssociationProxy implements ArrayAccess, Iterator {
+class CollectionProxy implements ArrayAccess, Iterator {
 
     private string $table_name;
     private string $model_name;
@@ -19,7 +19,7 @@ class AssociationProxy implements ArrayAccess, Iterator {
     private int $limit = -1;
 
     private bool $hasLoaded = false;
-    private array $objects = [];
+    private array $data = [];
 
     private string $query = "";
 
@@ -40,25 +40,27 @@ class AssociationProxy implements ArrayAccess, Iterator {
             case "all":
                 $this->construct_query();
                 return $this;
-            case "count":
-                $this->count = true;
-                $this->construct_query();
-                return;
+            case "value":
+            case "values":
+                return $this->get_values();
         }
-        if (!$this->hasLoaded) { $this->load_objects(); }
-        return $this->objects[$key];
+        $this->load_if_needed();
+        return $this->data[$key];
     }
 
     public function __isset ($key) {
-        return isset($this->objects[$key]);
+        return isset($this->data[$key]);
     }
 
-    public function load(): AssociationProxy {
-        $this->load_objects();
-        return $this;
+    private function get_values(): mixed {
+        $this->load_if_needed();
+        if ($this->count) {
+            return $this->data[0];
+        }
+        return $this->data;
     }
 
-    public function where(array $conditions, array $values): AssociationProxy
+    public function where(array $conditions, array $values): CollectionProxy
     {
         $this->wheres['conditions'] = array_merge($this->wheres['conditions'], $conditions);
         $this->wheres['values'] = array_merge($this->wheres['values'], $values);
@@ -66,28 +68,28 @@ class AssociationProxy implements ArrayAccess, Iterator {
         return $this;
     }
 
-    public function group(string $group): AssociationProxy
+    public function group(string $group): CollectionProxy
     {
         $this->groups[] = $group;
         $this->construct_query();
         return $this;
     }
 
-    public function order(string $order): AssociationProxy
+    public function order(string $order): CollectionProxy
     {
         $this->orders[] = $order;
         $this->construct_query();
         return $this;
     }
 
-    public function limit(int $limit): AssociationProxy
+    public function limit(int $limit): CollectionProxy
     {
         $this->limit = $limit;
         $this->construct_query();
         return $this;
     }
 
-    public function includes(array $models): AssociationProxy
+    public function includes(array $models): CollectionProxy
     {
         foreach($models as $model)
         {
@@ -97,27 +99,73 @@ class AssociationProxy implements ArrayAccess, Iterator {
         return $this;
     }
 
-    public function pluck($fields): AssociationProxy
+    public function pluck(array $fields): CollectionProxy
     {
-        $this->fields = $fields;
+        $this->fields = array_merge($fields);
         $this->construct_query();
         return $this;
     }
 
-    private function load_objects() {
+    public function count(): CollectionProxy
+    {
+        $this->count = true;
+        $this->construct_query();
+        return $this;
+    }
+
+    public function load_if_needed(): CollectionProxy
+    {
+        if (!$this->hasLoaded) { $this->load_objects(); }
+        return $this;
+    }
+
+
+    public function load(): CollectionProxy
+    {
+        $this->load_objects();
+        return $this;
+    }
+
+    private function load_objects()
+    {
         global $db, $store;
         $query = $this->construct_query();
         $values = $this->wheres['values'];
         $result = $db->prepare($query, $values);
-        $result->setFetchMode(PDO::FETCH_CLASS, $this->model_name);
-        $this->objects = $result->fetchAll();
-        foreach ($this->objects as $object) {
-            $store->store($this->model_name, $object->id, $object);
+        $result->setFetchMode(PDO::FETCH_ASSOC);
+
+        switch($this->get_load_mode())
+        {
+            case "class":
+                $result->setFetchMode(PDO::FETCH_CLASS, $this->model_name);
+                $this->data = $result->fetchAll();
+                foreach ($this->data as $object)
+                {
+                    $store->store($this->model_name, $object->id, $object);
+                }
+                break;
+            case "assoc":
+                $this->data = $result->fetchAll();
+                break;
+            case "arr":
+                $this->data = array_map(fn($row) => $row[$this->fields[0]], $result->fetchAll());
+                break;
+            case "count":
+                $this->data = [array_values($result->fetchAll()[0])[0]];
+                break;
         }
         $this->hasLoaded = true;
     }
 
-    public function construct_query(): String
+    private function get_load_mode(): string
+    {
+        if ($this->count) { return "count"; }
+        if (empty($this->fields)) { return "class"; }
+        if (count($this->fields) == 1) { return "arr"; }
+        return "assoc";
+    }
+
+    public function construct_query(): string
     {
         $this->hasLoaded = false;
         // Create fields
@@ -178,25 +226,28 @@ class AssociationProxy implements ArrayAccess, Iterator {
      * Array access methods
      */
     public function offsetExists($offset) {
-        return isset($this->objects[$offset]);
+        $this->load_if_needed();
+        return isset($this->data[$offset]);
     }
 
     public function offsetGet($offset) {
-        if (!$this->hasLoaded) { $this->load_objects(); }
-        return $this->offsetExists($offset) ? $this->objects[$offset] : null;
+        $this->load_if_needed();
+        return $this->offsetExists($offset) ? $this->data[$offset] : null;
     }
 
     public function offsetSet($offset,$value) {
+        $this->load_if_needed();
         if (is_null($offset)) {
-           $this->objects[] = $value;
+           $this->data[] = $value;
         } else {
-           $this->objects[$offset] = $value;
+           $this->data[$offset] = $value;
         }
     }
 
     public function offsetUnset($offset) {
+        $this->load_if_needed();
         if ($this->offsetExists($offset)) {
-            unset($this->objects[$offset]);
+            unset($this->data[$offset]);
         }
     }
 
@@ -204,29 +255,32 @@ class AssociationProxy implements ArrayAccess, Iterator {
      * Iterator Methods
      */
     public function key() {
+        $this->load_if_needed();
         return $this->pointer;
     }
 
     public function current() {
-        if (!$this->hasLoaded) { $this->load_objects(); }
-        return $this->objects[$this->pointer];
+        $this->load_if_needed();
+        return $this->data[$this->pointer];
     }
 
     public function next() {
+        $this->load_if_needed();
         $this->pointer++;
     }
 
     public function rewind() {
-        if (!$this->hasLoaded) { $this->load_objects(); }
+        $this->load_if_needed();
         $this->pointer = 0;
     }
 
     public function seek($position) {
+        $this->load_if_needed();
         $this->pointer = $position;
     }
 
     public function valid() {
-        if (!$this->hasLoaded) { $this->load_objects(); }
-        return isset($this->objects[$this->pointer]);
+        $this->load_if_needed();
+        return isset($this->data[$this->pointer]);
     }
 }

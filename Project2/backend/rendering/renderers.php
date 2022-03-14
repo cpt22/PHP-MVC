@@ -5,7 +5,7 @@
  * @return string - The string representation of the HTML document.
  * Render the layout
  */
-function render_layout(string $file, array $locals = array()) {
+function render_layout(string $file, array $locals = []) {
     global $TEMPLATE_EXTENSION, $params;
     $layout = '';
 
@@ -27,7 +27,7 @@ function render_layout(string $file, array $locals = array()) {
  * @return void
  * Renders a top level template.
  */
-function render(string $file, array $locals = array()) {
+function render(string $file, array $locals = []) {
     global $render_called, $TEMPLATE_EXTENSION, $SELECTED_LAYOUT, $params;
     $render_called = true;
 
@@ -56,7 +56,7 @@ function render(string $file, array $locals = array()) {
  * @return string|void
  * Renders the specified partial
  */
-function render_partial(string $partial, array $locals = array(), bool $output = true) {
+function render_partial(string $partial, array $locals = [], bool $output = true) {
     global $params;
     $contents = '';
     $partial = fix_partial_path($partial);
@@ -86,7 +86,7 @@ function render_partial(string $partial, array $locals = array(), bool $output =
  * @return string|void
  * Renders a collection of objects using the provided partial
  */
-function render_partial_collection(string $partial, $collection, string $as, array $locals = array(), bool $output = true) {
+function render_partial_collection(string $partial, $collection, string $as, array $locals = [], bool $output = true) {
     global $params;
     $contents = '';
     $partial = fix_partial_path($partial);

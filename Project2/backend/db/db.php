@@ -30,8 +30,8 @@ class DB
 
 
 
-    public function select(string $table, array $fields = array(), array $substitutions = array(), string $joins = "",
-                           array $join_tables = array(), $where_conditions = array(), $where_operator = "AND", $limit = null)
+    public function select(string $table, array $fields = [], array $substitutions = [], string $joins = "",
+                           array $join_tables = [], $where_conditions = [], $where_operator = "AND", $limit = null)
     {
         global $logger;
         if (empty($fields))
@@ -61,7 +61,7 @@ class DB
 
 
 
-    public function update(string $table, array $fields, array $values, array $where_conditions = array(),
+    public function update(string $table, array $fields, array $values, array $where_conditions = [],
                            string $where_operator = "AND")
     {
         global $logger;
@@ -78,7 +78,7 @@ class DB
 
 
 
-    public function delete(string $table, array $values = array(), array $where_conditions = array(), string $where_operator = "AND")
+    public function delete(string $table, array $values = [], array $where_conditions = [], string $where_operator = "AND")
     {
         global $logger;
         $where = $this->generate_where(conditions: $where_conditions, operator: $where_operator);
@@ -90,7 +90,7 @@ class DB
 
     public function prepare(string $query, array $kvs)
     {
-        $vals = array();
+        $vals = [];
         foreach ($kvs as $key => $value) {
             $vals[":$key"] = $value;
         }
@@ -110,7 +110,7 @@ class DB
     }
 
     private function process_fields(array $fields): string {
-        $tmp = array();
+        $tmp = [];
         foreach($fields as $field) {
             $tmp[] = "$field=:$field";
         }

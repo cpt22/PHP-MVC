@@ -3,10 +3,17 @@ abstract class Model
 {
     use HasAssociations;
 
-    public int $id;
+    protected bool $pause_modified_field_tracking = false;
 
-    function __construct()
+    protected array $modified_fields = [];
+
+    protected function __construct()
     {
+    }
+
+    public function __set($var, $val) {
+        $this->{$var} = $val;
+        if (!$this->pause_modified_field_tracking) { $this->modified_fields[$var] = $val;}
     }
 
 
@@ -33,7 +40,7 @@ abstract class Model
         global $db;
         $query = "SELECT COLUMN_NAME AS cn FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'".self::table_name()."'";
         $result = $db->query($query);
-        $fields = array();
+        $fields = [];
         foreach ($result->fetchAll(mode: PDO::FETCH_ASSOC) as $row)
         {
             $field = $row['cn'];
@@ -46,11 +53,7 @@ abstract class Model
     public function save()
     {
         global $db;
-        $values = array();
-        foreach ($this->db_fields as $field)
-        {
-            $values[$field] = $this->{$field};
-        }
+        $values = $this->modified_fields;
 
         if (empty($this->id))
         {
@@ -59,7 +62,7 @@ abstract class Model
             return true;
         }
 
-        $result = $db->update(table: self::table_name(), fields: $this->db_fields, values: $values, where_conditions: array("id=$this->id"));
+        $result = $db->update(table: self::table_name(), fields: array_keys($values), values: $values, where_conditions: array("id=$this->id"));
         return true;
     }
 
@@ -99,13 +102,14 @@ abstract class Model
     }
 
 
-    private static function make_proxy() { return new AssociationProxy(table_name: self::table_name(), model_name: self::model_name()); }
+    private static function make_proxy() { return new CollectionProxy(table_name: self::table_name(), model_name: self::model_name()); }
     public static function where(array $conditions, array $values) { return self::make_proxy()->where($conditions, $values); }
     public static function group(string $group) { return self::make_proxy()->group($group); }
     public static function order(string $order) { return self::make_proxy()->order($order); }
     public static function limit(int $limit) { return self::make_proxy()->limit($limit); }
     public static function includes($includes) { return self::make_proxy()->includes($includes); }
-    public static function pluck($fields) { return self::make_proxy()->pluck($fields); }
+    public static function pluck(array $fields) { return self::make_proxy()->pluck($fields); }
+    public static function count() { return self::make_proxy()->count(); }
     public static function all() { return self::make_proxy()->all; }
 }
 ?>
