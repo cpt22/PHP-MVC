@@ -66,6 +66,10 @@ abstract class Model
         return true;
     }
 
+    public function update(array $fields) {
+
+    }
+
     public static function find(mixed $value, string $attribute = "id")
     {
         global $db;

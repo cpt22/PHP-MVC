@@ -1,4 +1,10 @@
 <?php
+function fmt_print($item) {
+    echo '<pre>';
+    print_r($item);
+    echo '</pre>';
+}
+
 $ROOT = dirname(realpath(dirname(__FILE__)));
 $BACKEND_BASE = $ROOT . "/backend/";
 $APP_BASE = $ROOT . "/app/";

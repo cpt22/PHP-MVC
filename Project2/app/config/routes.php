@@ -1,25 +1,34 @@
 <?php
-$BASE_ROUTE = "index";
+$DEFAULT_ROUTE = "index";
 
-$routes = [
+//$routes = [
+//
+//    "index" => [
+//        "collection" => [
+//            "GET" => "index"
+//        ],
+//        "member" => [
+//            "GET" => "show"
+//        ]
+//    ],
+//
+//    "products" => [
+//        "collection" => [
+//            "GET" => "index",
+//            "POST" => "create"
+//        ],
+//        "member" => [
+//            "GET" => "show"
+//        ]
+//    ]
+//];
 
-    "index" => [
-        "collection" => [
-            "GET" => "index"
-        ],
-        "member" => [
-            "GET" => "show"
-        ]
+resource(name: "products", options: [
+    "collection" => [
+        "stats" => ["get", "put"]
     ],
-
-    "products" => [
-        "collection" => [
-            "GET" => "index",
-            "POST" => "create"
-        ],
-        "member" => [
-            "GET" => "show"
-        ]
+    "member" => [
+        "tmp" => "post"
     ]
-];
+]);
 ?>
