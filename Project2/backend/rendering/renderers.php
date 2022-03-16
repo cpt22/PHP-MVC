@@ -6,7 +6,7 @@
  * Render the layout
  */
 function render_layout(string $file, array $locals = []) {
-    global $TEMPLATE_EXTENSION, $params;
+    global $params;
     $layout = '';
 
     foreach($locals AS $key => $value) {
@@ -14,7 +14,7 @@ function render_layout(string $file, array $locals = []) {
     }
 
     ob_start();
-    require $GLOBALS['APP_BASE'] . "views/layouts/" . $file . $TEMPLATE_EXTENSION;
+    require $GLOBALS['APP_BASE'] . "views/layouts/" . $file . App::$config->template_extension;
     $layout .= ob_get_contents();
     ob_end_clean();
 
@@ -28,7 +28,7 @@ function render_layout(string $file, array $locals = []) {
  * Renders a top level template.
  */
 function render(string $file, array $locals = []) {
-    global $render_called, $TEMPLATE_EXTENSION, $SELECTED_LAYOUT, $params;
+    global $render_called, $SELECTED_LAYOUT, $params;
     $render_called = true;
 
     $contents = '';
@@ -38,12 +38,12 @@ function render(string $file, array $locals = []) {
     }
 
     ob_start();
-    require $GLOBALS['APP_BASE'] . "views/" . $file . $TEMPLATE_EXTENSION;
+    require $GLOBALS['APP_BASE'] . "views/" . $file . App::$config->template_extension;
     $contents .= ob_get_contents();
     ob_end_clean();
 
-    if (!empty($SELECTED_LAYOUT)) {
-        echo render_layout($SELECTED_LAYOUT, locals: array_merge($locals, array("content" => $contents)));
+    if (!empty($SELECTED_LAYOUT ?? App::$config->selected_layout)) {
+        echo render_layout($SELECTED_LAYOUT ?? App::$config->selected_layout, locals: array_merge($locals, array("content" => $contents)));
     } else {
         echo $contents;
     }
@@ -120,10 +120,9 @@ function render_partial_collection(string $partial, $collection, string $as, arr
  * Adjust the pathing of partials to append the extension and the underscore to the partial file name
  */
 function fix_partial_path(string $path) {
-    global $TEMPLATE_EXTENSION;
     $vals = explode("/", $path);
     $tmp = array_pop($vals);
-    $tmp = "_" . $tmp . $TEMPLATE_EXTENSION;
+    $tmp = "_" . $tmp . App::$config->template_extension;
     $vals[] = $tmp;
     return join("/", $vals);
 }

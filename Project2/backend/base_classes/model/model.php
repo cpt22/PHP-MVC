@@ -2,6 +2,7 @@
 abstract class Model
 {
     use HasAssociations;
+    use HasValidations;
 
     protected bool $pause_modified_field_tracking = false;
 
@@ -35,6 +36,9 @@ abstract class Model
         return get_called_class();
     }
 
+    /**
+     * @return array
+     */
     public static function get_attributes(): array
     {
         $query = "SELECT COLUMN_NAME AS cn FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'".self::table_name()."'";
@@ -64,10 +68,19 @@ abstract class Model
         return true;
     }
 
+    /**
+     * @param array $fields
+     * @return void
+     */
     public function update(array $fields) {
 
     }
 
+    /**
+     * @param mixed $value
+     * @param string $attribute
+     * @return mixed|null
+     */
     public static function find(mixed $value, string $attribute = "id")
     {
         if (is_array($value)) {
@@ -85,6 +98,10 @@ abstract class Model
     }
 
 
+    /**
+     * @param array $attributes
+     * @return mixed
+     */
     public static function create(array $attributes)
     {
         // Instantiate class

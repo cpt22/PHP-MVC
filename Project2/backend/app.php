@@ -30,9 +30,3 @@ class App {
         }
     }
 }
-
-function fmt_print($item) {
-    echo '<pre>';
-    print_r($item);
-    echo '</pre>';
-}

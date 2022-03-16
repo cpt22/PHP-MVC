@@ -48,4 +48,11 @@ function recursive_load(string $base_path) {
     }
 }
 
+function fmt_print($item) {
+    echo '<pre>';
+    print_r($item);
+    echo '</pre>';
+}
+
+
 ?>
