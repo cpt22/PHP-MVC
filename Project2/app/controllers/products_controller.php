@@ -19,9 +19,16 @@ class ProductsController
         //$tmp->save(exception: true);
 
         $tmp = Product::find(12);
-        $tmp->name = $_REQUEST['name'];
         $tmp->save(exception: true);
-        print_r($tmp->users);
+
+        $t = Product::create(["name" => "Will", "quantity" => 400]);
+        print_r($t);
+        $t->name = "Will 2";
+        print_r($t);
+        $t->save();
+
+        print_r(Product::all()->where(["id=:id"], ["id" => $t->id]));
+        //print_r($tmp->users);
         //print_r($tmp);
         //print_r(Product::find(95));
         echo "</pre>";

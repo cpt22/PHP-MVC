@@ -267,7 +267,6 @@ abstract class BaseModel
         return $class;
     }
 
-
     private static function make_proxy() { return new CollectionProxy(table_name: self::table_name(), model_name: self::model_name()); }
     public static function where(array $conditions, array $values) { return self::make_proxy()->where($conditions, $values); }
     public static function group(string $group) { return self::make_proxy()->group($group); }

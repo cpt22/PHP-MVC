@@ -38,7 +38,7 @@ function render(string $file, array $locals = []) {
     }
 
     ob_start();
-    require $GLOBALS['APP_BASE'] . "views/" . $file . App::$config->template_extension;
+    require APP_BASE . "views/" . $file . App::$config->template_extension;
     $contents .= ob_get_contents();
     ob_end_clean();
 
@@ -66,8 +66,8 @@ function render_partial(string $partial, array $locals = [], bool $output = true
     }
 
     ob_start();
-    require $GLOBALS['APP_BASE'] . "views/" . $partial;
-    $contents .=ob_get_contents();
+    require APP_BASE . "views/" . $partial;
+    $contents .= ob_get_contents();
     ob_end_clean();
 
     if ($output) {
@@ -100,7 +100,7 @@ function render_partial_collection(string $partial, $collection, string $as, arr
         ${$as} = $object;
 
         ob_start();
-        include $GLOBALS['APP_BASE'] . "views/" . $partial;
+        include APP_BASE . "views/" . $partial;
         $contents .= ob_get_contents();
         ob_end_clean();
 
