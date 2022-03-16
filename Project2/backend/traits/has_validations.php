@@ -36,7 +36,7 @@ trait HasValidations {
 
     protected function validation_method_presence(string $field, mixed $options) {
         if (is_bool($options)) {
-            if (!isset($this->{$field}) || $options == empty($this->{$field})) {
+            if ($options == empty($this->{$field})) {
                 $this->add_error($field, "$field must " . ($options ? "" : "not ") . "be present.");
             }
         }

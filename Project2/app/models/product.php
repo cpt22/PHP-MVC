@@ -1,14 +1,10 @@
 <?php
-class Product extends Model
+class Product extends BaseModel
 {
-    protected function setup() {
+    protected function setup()
+    {
         $this->validates("name", ["presence" => true]);
-        $this->belongs_to("user", inverse_of: "products");
-        $this->after_create('say_dog');
-    }
-
-    protected function say_dog() {
-        print_r("I AM DOG");
+        $this->has_many("users", inverse_of: "product");
     }
 }
 ?>

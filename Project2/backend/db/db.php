@@ -91,7 +91,6 @@ class DB
 
         $field_str = $this->process_fields($fields);
         $query = "UPDATE " . $table . " SET $field_str $where";
-        echo $query;
         return $this->prepare($query, kvs: $values);
     }
 

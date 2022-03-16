@@ -65,7 +65,7 @@ class CollectionProxy implements ArrayAccess, Iterator {
         return $this->data;
     }
 
-    public function where(array $conditions, array $values): CollectionProxy
+    public function where(array $conditions, array $values = []): CollectionProxy
     {
         $this->wheres['conditions'] = array_merge($this->wheres['conditions'], $conditions);
         $this->wheres['values'] = array_merge($this->wheres['values'], $values);

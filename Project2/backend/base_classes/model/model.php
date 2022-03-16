@@ -1,5 +1,5 @@
 <?php
-abstract class Model
+abstract class BaseModel
 {
     use HasAssociations;
     use HasValidations;
@@ -8,6 +8,7 @@ abstract class Model
     protected bool $modified_field_tracking = true;
 
     protected array $modified_fields = [];
+    protected array $attributes = [];
 
     protected static ?array $db_fields = null;
 
@@ -16,18 +17,39 @@ abstract class Model
         $this->setup();
     }
 
-    public function __set($var, $val) {
-        $this->{$var} = $val;
-        if ($this->modified_field_tracking) { $this->modified_fields[$var] = $val;}
+    public function __set($name, $val) {
+        if ($this->is_association($name)) {
+            $this->set_on_association($name, $val);
+        } else if (self::is_field($name)) {
+            $this->attributes[$name] = $val;
+            if ($this->modified_field_tracking) {
+                $this->modified_fields[$name] = $val;
+            }
+        }
         if (!empty($this->id)) { App::$store->store(self::model_name(), $this->id, $this); }
     }
 
+    /**
+     * @param $var
+     * @return mixed|void
+     */
     public function __get($var) {
         if ($this->is_association($var)) {
             return $this->get_association_objects($var);
         }
+        if (array_key_exists($var, $this->attributes)) {
+            return $this->attributes[$var];
+        }
 
         return $this->{$var};
+    }
+
+    /**
+     * @param $name
+     * @return bool
+     */
+    public function __isset($name) {
+        return array_key_exists($name, $this->attributes);
     }
 
     protected function setup() {}
@@ -75,6 +97,21 @@ abstract class Model
         return self::$db_fields;
     }
 
+    /**
+     * @param string $field
+     * @return bool
+     */
+    public static function is_field(string $field): bool {
+        return in_array($field, self::get_db_fields());
+    }
+
+    /**
+     * @return void
+     */
+    public function clear_modified_fields(): void {
+        $this->modified_fields = [];
+    }
+
     // TODO: Fix return types and error handling
 
     /**
@@ -82,30 +119,37 @@ abstract class Model
      */
     public function save(bool $exception = false): bool
     {
-        $this->run_validations();
         return $this->save_internal(exception: $exception);
     }
 
+    /**
+     * @param bool $exception
+     * @return bool
+     */
     protected function save_internal(bool $exception = false): bool
     {
+        $is_new_record = empty($this->id);
         // TODO: handle exceptions for errors
+        $this->run_validations();
         if (!empty($this->errors)) { return false; }
-        if (empty($this->id)) { $this->run_before_create(); }
+        if ($is_new_record) { $this->run_before_create(); } else { $this->run_before_update(); }
         $this->run_before_save();
-        $values = array_intersect_key($this->modified_fields, array_flip(self::get_db_fields()));
+        $values = array_intersect_key($this->attributes, array_flip(array_keys($this->modified_fields)), array_flip(self::get_db_fields()));
         try {
-            if (empty($this->id))
+            if ($is_new_record)
             {
                 App::$db->insert(table: self::table_name(), values: $values);
                 $this->id = App::$db->connection->lastInsertId();
             } else {
                 App::$db->update(table: self::table_name(), fields: array_keys($values), values: $values, where_conditions: array("id=$this->id"));
             }
+            $this->clear_modified_fields();
         } catch (PDOException $e) {
             if ($exception) { throw $e; }
             return false;
         }
         $this->run_after_save();
+        if ($is_new_record) { $this->run_after_create(); } else { $this->run_after_update(); }
         return true;
     }
 
@@ -114,10 +158,7 @@ abstract class Model
      * @return void
      */
     public function update(array $fields, bool $exception = false) {
-        $this->run_validations();
-        $this->run_before_update();
         $this->save_internal(exception: $exception);
-        $this->run_after_update();
     }
 
     /**
@@ -207,14 +248,7 @@ abstract class Model
         foreach ($attributes as $attr => $value) {
             $class->{$attr} = $value;
         }
-        $class->run_validations();
-        if (empty($class->errors)) {
-            $class->run_before_create();
-            if (!$class->save_internal($exception)) {
-                return $class;
-            }
-            $class->run_after_create();
-        }
+        $class->save_internal($exception);
         return $class;
     }
 

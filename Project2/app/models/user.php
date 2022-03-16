@@ -1,6 +1,6 @@
 <?php
 
-class User extends Model
+class User extends BaseModel
 {
     protected function setup() {
         $this->has_many("products", );
