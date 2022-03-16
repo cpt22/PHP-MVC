@@ -3,19 +3,26 @@ abstract class Model
 {
     use HasAssociations;
     use HasValidations;
+    use HasCallbacks;
 
-    protected bool $pause_modified_field_tracking = false;
+    protected bool $modified_field_tracking = false;
 
     protected array $modified_fields = [];
 
     protected function __construct()
     {
+        $this->setup();
     }
 
     public function __set($var, $val) {
         $this->{$var} = $val;
-        if (!$this->pause_modified_field_tracking) { $this->modified_fields[$var] = $val;}
+        if ($this->modified_field_tracking) { $this->modified_fields[$var] = $val;}
     }
+
+    protected function setup() {}
+
+    protected function pause_modified_field_tracking() { $this->modified_field_tracking = false; }
+    protected function resume_modified_field_tracking() {$this->modified_field_tracking = true; }
 
 
     /**
@@ -108,12 +115,16 @@ abstract class Model
         $class_name = self::model_name();
         $class = new $class_name();
 
+        $class->pause_modified_field_tracking();
         foreach ($attributes as $attr => $value) {
             $class->{$attr} = $value;
         }
-        $result = App::$db->insert(table: self::table_name(), values: $attributes);
-
-        $class->id = App::$db->connection->lastInsertId();
+        $class->run_validations();
+        if (empty($class->errors)) {
+            $result = App::$db->insert(table: self::table_name(), values: $attributes);
+            $class->id = App::$db->connection->lastInsertId();
+        }
+        $class->resume_modified_field_tracking();
         return $class;
     }
 

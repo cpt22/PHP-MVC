@@ -14,6 +14,7 @@ trait HasValidations {
     }
 
     protected function run_validations() {
+        $this->run_before_validation();
         foreach ($this->validations as $validation_item) {
             if ($validation_item['type'] == "method") {
                 $this->{$validation_item['method']}();
@@ -23,6 +24,20 @@ trait HasValidations {
                     // TODO: Validators
                     $this->{"validation_method_" . $name}($field, $options);
                 }
+            }
+        }
+        $this->run_after_validation();
+    }
+
+    protected function add_error(string $field, string $message) {
+        if (!array_key_exists($field, $this->errors)) { $this->errors[$field] = []; }
+        $this->errors[$field][] = $message ?? "$field has an error.";
+    }
+
+    protected function validation_method_presence(string $field, mixed $options) {
+        if (is_bool($options)) {
+            if (!isset($this->{$field}) || $options == empty($this->{$field})) {
+                $this->add_error($field, "$field must " . ($options ? "" : "not ") . "be present.");
             }
         }
     }
