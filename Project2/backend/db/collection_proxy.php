@@ -23,10 +23,15 @@ class CollectionProxy implements ArrayAccess, Iterator {
 
     private string $query = "";
 
+    private DB $db;
+    private ObjectStore $store;
+
     public function __construct($table_name, $model_name)
     {
         $this->table_name = $table_name;
         $this->model_name = $model_name;
+        $this->db = App::$db;
+        $this->store = App::$store;
     }
 
     public function __toString(): string {
@@ -128,10 +133,9 @@ class CollectionProxy implements ArrayAccess, Iterator {
 
     private function load_objects()
     {
-        global $db, $store;
         $query = $this->construct_query();
         $values = $this->wheres['values'];
-        $result = $db->prepare($query, $values);
+        $result = $this->db->prepare($query, $values);
         $result->setFetchMode(PDO::FETCH_ASSOC);
 
         switch($this->get_load_mode())
@@ -141,7 +145,7 @@ class CollectionProxy implements ArrayAccess, Iterator {
                 $this->data = $result->fetchAll();
                 foreach ($this->data as $object)
                 {
-                    $store->store($this->model_name, $object->id, $object);
+                    $this->store->store($this->model_name, $object->id, $object);
                 }
                 break;
             case "assoc":
