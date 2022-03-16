@@ -1,4 +1,21 @@
 <?php
+class Loader {
+    private array $app_files;
+    private array $app_exclusions;
+    private array $backend_files;
+    private array $backend_exclusions;
+
+    public function __construct(array $backend_files, array $app_files, array $backed_exclusions = [], array $app_exclusions = [])
+    {
+        $this->backend_files = $backend_files;
+        $this->app_files = $app_files;
+        $this->app_exclusions = $app_exclusions;
+        $this->backend_exclusions = $backed_exclusions;
+    }
+
+
+
+}
 function fmt_print($item) {
     echo '<pre>';
     print_r($item);
@@ -8,6 +25,8 @@ function fmt_print($item) {
 $ROOT = dirname(realpath(dirname(__FILE__)));
 $BACKEND_BASE = $ROOT . "/backend/";
 $APP_BASE = $ROOT . "/app/";
+define("BACKEND_BASE", $BACKEND_BASE);
+define("APP_BASE", $APP_BASE);
 
 $GLOBALS['ROOT'] = $ROOT;
 $GLOBALS['BACKEND_BASE'] = $BACKEND_BASE;

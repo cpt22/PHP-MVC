@@ -1,5 +1,6 @@
 <?php
 use JetBrains\PhpStorm\NoReturn;
+
 $BLANK_PATH_ROUTE = "BLANK_PATH_ROUTE";
 $DEFAULT_RESOURCE_ROUTES = [
     "index" => [
@@ -46,50 +47,91 @@ $DEFAULT_RESOURCE_ROUTES = [
     ]
 ];
 
-$ROUTES = [];
+class Router {
+    private array $default_resource_routes;
+    private string $blank_path_route;
+    private array $routes = [];
 
-function resource(string $name, array $except = [], array $only = [], array $options = []) {
-    global $ROUTES, $BLANK_PATH_ROUTE, $DEFAULT_RESOURCE_ROUTES;
-    $default_routes = $DEFAULT_RESOURCE_ROUTES;
-    $temp = [
-        "collection" => [],
-        "member" => []
-    ];
-    if (!empty($only)) {
-        $default_routes = array_intersect_key($default_routes, array_flip($only));
-    } else if (!empty($except)) {
-        $default_routes = array_diff_key($default_routes, array_flip($except));
+    public function __construct() {
+        global $DEFAULT_RESOURCE_ROUTES, $BLANK_PATH_ROUTE;
+        $this->blank_path_route = $BLANK_PATH_ROUTE;
+        $this->default_resource_routes = $DEFAULT_RESOURCE_ROUTES;
     }
 
-    foreach ($default_routes as $action => $body) {
-        $type = $body['type'];
-        $path = $body['path'];
-        $method = strtolower($body['method']);
-        $temp[$type][$path][$method] = $action;
+    /**
+     * @return void
+     */
+    public function init() {
+        require_once APP_BASE . "/config/routes.php";
     }
 
-    foreach(['collection', 'member'] as $type) {
-        $o = $options[$type];
-        if (!isset($o)) { continue; }
-        foreach($o as $route_name => $val) {
-            if (is_array($val)) {
-                $val = array_unique($val);
-                foreach($val as $method) {
-                    $method = strtolower($method);
-                    $temp[$type][$route_name][$method] = $route_name;
+    /**
+     * @param string $name
+     * @param array $except
+     * @param array $only
+     * @param array $options
+     * @return void
+     */
+    public function resource(string $name, array $except = [], array $only = [], array $options = []) {
+        $default_routes = $this->default_resource_routes;
+        $temp = [
+            "collection" => [],
+            "member" => []
+        ];
+        if (!empty($only)) {
+            $default_routes = array_intersect_key($default_routes, array_flip($only));
+        } else if (!empty($except)) {
+            $default_routes = array_diff_key($default_routes, array_flip($except));
+        }
+
+        foreach ($default_routes as $action => $body) {
+            $type = $body['type'];
+            $path = $body['path'];
+            $method = strtolower($body['method']);
+            $temp[$type][$path][$method] = $action;
+        }
+
+        foreach(['collection', 'member'] as $type) {
+            $o = $options[$type];
+            if (!isset($o)) { continue; }
+            foreach($o as $route_name => $val) {
+                if (is_array($val)) {
+                    $val = array_unique($val);
+                    foreach($val as $method) {
+                        $method = strtolower($method);
+                        $temp[$type][$route_name][$method] = $route_name;
+                    }
+                } else {
+                    $val = strtolower($val);
+                    $temp[$type][$route_name][$val] = $route_name;
                 }
-            } else {
-                $val = strtolower($val);
-                $temp[$type][$route_name][$val] = $route_name;
             }
         }
-    }
 
-    $ROUTES[$name] = $temp;
+        $this->routes[$name] = $temp;
+    }
+}
+
+function resource(string $name, array $except = [], array $only = [], array $options = []) {
+    App::$router->resource($name, $except, $only, $options);
 }
 
 
-require_once $APP_BASE . "config/routes.php";
+function url_for(string $model_name, string $path, string $method="get", array $params = []) {
+
+    $param_string = "";
+    $method = strtolower($method);
+    if (!empty($params)) {
+        $param_string = "?" . http_build_query($params);
+    }
+
+    //require_once APP_BASE . "config/routes.php";
+
+}
+
+
+/*
+fmt_print(url_for(model_name: "test", path: "test", params: ["nam  e" => "dog cat query kjehdakjhdakjEFR®´´∂"]));
 
 // Extract the request uri and set the default route if necessary
 $stripped_uri = $_SERVER['REDIRECT_URL'];
@@ -158,4 +200,5 @@ if (!$render_called)
     $top_view_partial =  $route . "/" . $action;
     render($top_view_partial);
 }
+*/
 ?>
