@@ -121,8 +121,12 @@ abstract class Model
         }
         $class->run_validations();
         if (empty($class->errors)) {
+            $class->run_before_create();
+            $class->run_before_save();
             $result = App::$db->insert(table: self::table_name(), values: $attributes);
             $class->id = App::$db->connection->lastInsertId();
+            $class->run_after_save();
+            $class->run_after_create();
         }
         $class->resume_modified_field_tracking();
         return $class;

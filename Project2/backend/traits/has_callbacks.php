@@ -13,26 +13,29 @@ trait HasCallbacks {
         'after_destroy' => []
     ];
 
-    protected function before_validation() {}
-    protected function after_validation() {}
+    protected function before_validation(string $method, array $params = []) {}
+    protected function after_validation(string $method, array $params = []) {}
 
-    protected function before_save() {}
-    protected function after_save() {}
+    protected function before_save(string $method, array $params = []) {}
+    protected function after_save(string $method, array $params = []) {}
 
-    protected function before_create() {}
-    protected function after_create() {}
+    protected function before_create(string $method, array $params = []) {}
+    protected function after_create(string $method, array $params = []) {}
 
-    protected function before_update() {}
-    protected function after_update() {}
+    protected function before_update(string $method, array $params = []) {}
+    protected function after_update(string $method, array $params = []) {}
 
-    protected function before_destroy() {}
-    protected function after_destroy() {}
+    protected function before_destroy(string $method, array $params = []) {}
+    protected function after_destroy(string $method, array $params = []) {}
 
     protected function run_before_validation() {}
     protected function run_after_validation() {}
 
     protected function run_before_save() {}
     protected function run_after_save() {}
+
+    protected function run_before_create() {}
+    protected function run_after_create() {}
 
     protected function run_before_update() {}
     protected function run_after_update() {}
