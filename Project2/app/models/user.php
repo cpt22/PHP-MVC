@@ -2,5 +2,7 @@
 
 class User extends Model
 {
-    protected function setup() {}
+    protected function setup() {
+        $this->has_many("products", );
+    }
 }

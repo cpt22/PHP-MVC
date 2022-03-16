@@ -13,20 +13,40 @@ trait HasCallbacks {
         'after_destroy' => []
     ];
 
-    protected function before_validation(string $method, array $params = []) {}
-    protected function after_validation(string $method, array $params = []) {}
+    protected function before_validation(string $method, array $params = []) {
+        array_push($this->callbacks['before_validation'], $method);
+    }
+    protected function after_validation(string $method, array $params = []) {
+        array_push($this->callbacks['after_validation'], $method);
+    }
 
-    protected function before_save(string $method, array $params = []) {}
-    protected function after_save(string $method, array $params = []) {}
+    protected function before_save(string $method, array $params = []) {
+        array_push($this->callbacks['before_save'], $method);
+    }
+    protected function after_save(string $method, array $params = []) {
+        array_push($this->callbacks['after_save'], $method);
+    }
 
-    protected function before_create(string $method, array $params = []) {}
-    protected function after_create(string $method, array $params = []) {}
+    protected function before_create(string $method, array $params = []) {
+        array_push($this->callbacks['before_create'], $method);
+    }
+    protected function after_create(string $method, array $params = []) {
+        array_push($this->callbacks['after_create'], $method);
+    }
 
-    protected function before_update(string $method, array $params = []) {}
-    protected function after_update(string $method, array $params = []) {}
+    protected function before_update(string $method, array $params = []) {
+        array_push($this->callbacks['before_update'], $method);
+    }
+    protected function after_update(string $method, array $params = []) {
+        array_push($this->callbacks['after_update'], $method);
+    }
 
-    protected function before_destroy(string $method, array $params = []) {}
-    protected function after_destroy(string $method, array $params = []) {}
+    protected function before_destroy(string $method, array $params = []) {
+        array_push($this->callbacks['before_destroy'], $method);
+    }
+    protected function after_destroy(string $method, array $params = []) {
+        array_push($this->callbacks['after_destroy'], $method);
+    }
 
     protected function run_before_validation() {}
     protected function run_after_validation() {}
@@ -42,4 +62,12 @@ trait HasCallbacks {
 
     protected function run_before_destroy() {}
     protected function run_after_destroy() {}
+
+    protected function run_callback_list(string $callback_type) {
+        if (array_key_exists($callback_type, $this->callbacks)) {
+            foreach ($this->callbacks[$callback_type] as $callback) {
+                $this->{$callback}();
+            }
+        }
+    }
 }

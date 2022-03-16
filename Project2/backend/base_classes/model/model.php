@@ -5,9 +5,11 @@ abstract class Model
     use HasValidations;
     use HasCallbacks;
 
-    protected bool $modified_field_tracking = false;
+    protected bool $modified_field_tracking = true;
 
     protected array $modified_fields = [];
+
+    protected static ?array $db_fields = null;
 
     protected function __construct()
     {
@@ -17,6 +19,15 @@ abstract class Model
     public function __set($var, $val) {
         $this->{$var} = $val;
         if ($this->modified_field_tracking) { $this->modified_fields[$var] = $val;}
+        if (!empty($this->id)) { App::$store->store(self::model_name(), $this->id, $this); }
+    }
+
+    public function __get($var) {
+        if ($this->is_association($var)) {
+            return $this->get_association_objects($var);
+        }
+
+        return $this->{$var};
     }
 
     protected function setup() {}
@@ -31,7 +42,7 @@ abstract class Model
      */
     public static function table_name(): string
     {
-        return strtolower(get_called_class()) . "s";
+        return Inflector::tableize(get_called_class());
     }
 
     /**
@@ -44,34 +55,57 @@ abstract class Model
     }
 
     /**
+     * Loads the database fields for this model to enable saving and updating properly.
      * @return array
      */
-    public static function get_attributes(): array
+    public static function get_db_fields(): array
     {
-        $query = "SELECT COLUMN_NAME AS cn FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'".self::table_name()."'";
-        $result = App::$db->query($query);
-        $fields = [];
-        foreach ($result->fetchAll(mode: PDO::FETCH_ASSOC) as $row)
-        {
-            $field = $row['cn'];
-            $fields[] = $field;
+        if (self::$db_fields == null) {
+            $query = "SELECT COLUMN_NAME AS cn FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'".self::table_name()."'";
+            $result = App::$db->query($query);
+            $fields = [];
+            foreach ($result->fetchAll(mode: PDO::FETCH_ASSOC) as $row)
+            {
+                $field = $row['cn'];
+                $fields[] = $field;
+            }
+            self::$db_fields = $fields;
+            return self::$db_fields;
         }
-        return $fields;
+        return self::$db_fields;
     }
 
     // TODO: Fix return types and error handling
-    public function save()
+
+    /**
+     * @return bool
+     */
+    public function save(bool $exception = false): bool
     {
-        $values = $this->modified_fields;
+        $this->run_validations();
+        return $this->save_internal(exception: $exception);
+    }
 
-        if (empty($this->id))
-        {
-            $result = App::$db->insert(table: self::table_name(), values: $values);
-            $this->id = App::$db->connection->lastInsertId();
-            return true;
+    protected function save_internal(bool $exception = false): bool
+    {
+        // TODO: handle exceptions for errors
+        if (!empty($this->errors)) { return false; }
+        if (empty($this->id)) { $this->run_before_create(); }
+        $this->run_before_save();
+        $values = array_intersect_key($this->modified_fields, array_flip(self::get_db_fields()));
+        try {
+            if (empty($this->id))
+            {
+                App::$db->insert(table: self::table_name(), values: $values);
+                $this->id = App::$db->connection->lastInsertId();
+            } else {
+                App::$db->update(table: self::table_name(), fields: array_keys($values), values: $values, where_conditions: array("id=$this->id"));
+            }
+        } catch (PDOException $e) {
+            if ($exception) { throw $e; }
+            return false;
         }
-
-        $result = App::$db->update(table: self::table_name(), fields: array_keys($values), values: $values, where_conditions: array("id=$this->id"));
+        $this->run_after_save();
         return true;
     }
 
@@ -79,56 +113,123 @@ abstract class Model
      * @param array $fields
      * @return void
      */
-    public function update(array $fields) {
+    public function update(array $fields, bool $exception = false) {
+        $this->run_validations();
+        $this->run_before_update();
+        $this->save_internal(exception: $exception);
+        $this->run_after_update();
+    }
 
+    /**
+     * @return void
+     */
+    public function reload() {
+        //TODO: Implement
+    }
+
+    /**
+     * @return void
+     */
+    public function destroy(bool $exception = false) {
+        $this->run_before_destroy();
+        if (isset($this->id) && !empty($this->id)) {
+            try {
+                App::$db->delete(self::table_name(), values: ["id" => $this->id], where_conditions: ["id=:id"]);
+                App::$store->unstore(self::model_name(), $this->id);
+            } catch (PDOException $e) {
+                if ($exception) { throw $e; }
+                return false;
+            }
+        }
+        $this->run_after_destroy();
+        return true;
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed|null
+     */
+    public static function find(mixed $value): mixed
+    {
+        return self::find_by(value: $value);
     }
 
     /**
      * @param mixed $value
      * @param string $attribute
-     * @return mixed|null
+     * @return mixed|object|null
      */
-    public static function find(mixed $value, string $attribute = "id")
+    public static function find_by(mixed $value, string $attribute = "id"): mixed
     {
         if (is_array($value)) {
             return null;
         }
 
+        if ($attribute == "id") {
+            $obj = App::$store->retrieve(self::model_name(), $value);
+            if ($obj != null) {
+                return $obj;
+            }
+        }
+
         $result = App::$db->select(table: self::table_name(), substitutions: array("val" => $value),
             where_conditions: array("$attribute=:val"), limit: 1);
-        $class_name = self::model_name();
-        $obj = new $class_name();
-        foreach ($result->fetch(mode: PDO::FETCH_ASSOC) as $column => $value) {
-            $obj->{$column} = $value;
+        if ($result->rowCount() == 1) {
+            $data = $result->fetch();
+            if (!empty($data['id'])) {
+                $obj = App::$store->retrieve(self::model_name(), $data['id']);
+                if ($obj != null) {
+                    return $obj;
+                }
+            }
+            $class_name = self::model_name();
+            $obj = new $class_name();
+            foreach ($data as $column => $value) {
+                $obj->{$column} = $value;
+            }
+            return $obj;
         }
-        return $obj;
+        return null;
     }
 
 
     /**
      * @param array $attributes
+     * @param bool $exception
      * @return mixed
      */
-    public static function create(array $attributes)
+    public static function create(array $attributes, bool $exception = false)
     {
         // Instantiate class
-        $class_name = self::model_name();
+        $class_name = get_called_class();
         $class = new $class_name();
 
-        $class->pause_modified_field_tracking();
         foreach ($attributes as $attr => $value) {
             $class->{$attr} = $value;
         }
         $class->run_validations();
         if (empty($class->errors)) {
             $class->run_before_create();
-            $class->run_before_save();
-            $result = App::$db->insert(table: self::table_name(), values: $attributes);
-            $class->id = App::$db->connection->lastInsertId();
-            $class->run_after_save();
+            if (!$class->save_internal($exception)) {
+                return $class;
+            }
             $class->run_after_create();
         }
-        $class->resume_modified_field_tracking();
+        return $class;
+    }
+
+    /**
+     * @param array $attributes
+     * @return Model
+     */
+    public static function new(array $attributes = []): Model
+    {
+        $class_name = get_called_class();
+        $class = new $class_name();
+        // Assign attributes
+        foreach ($attributes as $attr => $value) {
+            $class->{$attr} = $value;
+        }
         return $class;
     }
 

@@ -13,8 +13,15 @@ class ObjectStore
         $this->objects[$model_name][$id] = $object;
     }
 
+    public function unstore(string $model_name, int $id): void {
+        if (array_key_exists($model_name, $this->objects)) {
+            unset($this->objects[$model_name][$id]);
+        }
+    }
+
     public function retrieve(string $model_name, int $id): ?object {
         if (!array_key_exists($model_name, $this->objects)) { return null; }
+        if (!array_key_exists($id, $this->objects[$model_name])) { return null; }
         return $this->objects[$model_name][$id];
     }
 }
