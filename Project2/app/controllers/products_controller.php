@@ -19,9 +19,11 @@ class ProductsController
         $products = $u->products;
         //print_r($products->load());
         $names = $products->includes(['user'])->pluck(['id']);
-        print_r($names->load());
+        //print_r($names->load());
         $limited = $names->limit(1);
-        print_r($limited->load());
+        //print_r($limited->load());
+        //print_r($limited->count());
+        //print_r($products->count);
         //print_r($products->load());
         //$names = $products->pluck(["name"]);
         //print_r($products->load());

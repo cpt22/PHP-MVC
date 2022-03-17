@@ -25,7 +25,7 @@ class HasManyAssociation extends Association
 //            value: $this->owner->id);
         $owner_id = $this->owner->id;
         $this->data = (new CollectionProxy(table_name: $table_name, model_name: $class_name))
-            ->where(["$this->foreign_key=$owner_id"]);
+            ->where(["$table_name.$this->foreign_key=$owner_id"]);
         return $this->data;
     }
 

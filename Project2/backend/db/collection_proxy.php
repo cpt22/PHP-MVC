@@ -46,6 +46,9 @@ class CollectionProxy implements ArrayAccess, Iterator {
             case "value":
             case "values":
                 return $this->get_values();
+            case "count":
+                $obj = $this->count();
+                return $obj->load()[0];;
         }
         $this->load_if_needed();
         return $this->data[$key];
@@ -129,6 +132,7 @@ class CollectionProxy implements ArrayAccess, Iterator {
         $copy = $this->make_copy();
         $copy->count = true;
         $copy->construct_query();
+        $copy->load_if_needed();
         return $copy;
     }
 
@@ -159,7 +163,7 @@ class CollectionProxy implements ArrayAccess, Iterator {
                 $this->data = $result->fetchAll();
                 foreach ($this->data as $object)
                 {
-                    $this->store->store($this->model_name, $object->id, $object);
+                    App::$store->store($this->model_name, $object->id, $object);
                 }
                 break;
             case "assoc":
@@ -231,7 +235,7 @@ class CollectionProxy implements ArrayAccess, Iterator {
         }
 
         $limit = "";
-        if ($this->limit != -1) {
+        if ($this->limit > 0) {
            $limit = "LIMIT $this->limit";
         }
 
