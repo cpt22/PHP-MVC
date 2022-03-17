@@ -24,4 +24,21 @@ class ObjectStore
         if (!array_key_exists($id, $this->objects[$model_name])) { return null; }
         return $this->objects[$model_name][$id];
     }
+
+    public function lookup(string $model_name, string $attribute, string $value, bool $singular = false): mixed {
+        if (!array_key_exists($model_name, $this->objects)) { return null; }
+        $to_return = [];
+        foreach ($this->objects[$model_name] as $object) {
+            if (isset($object->{$attribute}) && $object->{$attribute} == $value) {
+                $to_return[] = $object;
+            }
+        }
+
+        if ($singular) {
+            if (count($to_return) > 0)
+                return $to_return[0];
+            return null;
+        }
+        return $to_return;
+    }
 }

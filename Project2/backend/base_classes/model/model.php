@@ -8,7 +8,7 @@ abstract class BaseModel
     protected bool $modified_field_tracking = true;
 
     protected array $modified_fields = [];
-    protected array $attributes = [];
+    private array $attributes = [];
 
     protected static ?array $db_fields = null;
 
@@ -40,8 +40,10 @@ abstract class BaseModel
         if (array_key_exists($var, $this->attributes)) {
             return $this->attributes[$var];
         }
-
-        return $this->{$var};
+        if (isset($this->{$var})) {
+            return $this->{$var};
+        }
+        debug_print_backtrace();
     }
 
     /**
@@ -52,10 +54,10 @@ abstract class BaseModel
         return array_key_exists($name, $this->attributes);
     }
 
-    protected function setup() {}
+    abstract protected function setup();
 
-    protected function pause_modified_field_tracking() { $this->modified_field_tracking = false; }
-    protected function resume_modified_field_tracking() {$this->modified_field_tracking = true; }
+    private function pause_modified_field_tracking() { $this->modified_field_tracking = false; }
+    private function resume_modified_field_tracking() {$this->modified_field_tracking = true; }
 
 
     /**
@@ -105,11 +107,23 @@ abstract class BaseModel
         return in_array($field, self::get_db_fields());
     }
 
+    public function load_from_attributes(array $attributes) {
+        $this->pause_modified_field_tracking();
+        foreach ($attributes as $attr => $value) {
+            $this->{$attr} = $value;
+        }
+        $this->resume_modified_field_tracking();
+    }
+
     /**
      * @return void
      */
-    public function clear_modified_fields(): void {
+    private function clear_modified_fields(): void {
         $this->modified_fields = [];
+    }
+
+    public function is_new_record(): bool {
+        return empty($this->id);
     }
 
     // TODO: Fix return types and error handling
@@ -128,7 +142,7 @@ abstract class BaseModel
      */
     protected function save_internal(bool $exception = false): bool
     {
-        $is_new_record = empty($this->id);
+        $is_new_record = $this->is_new_record();
         // TODO: handle exceptions for errors
         $this->run_validations();
         if (!empty($this->errors)) { return false; }
@@ -136,14 +150,15 @@ abstract class BaseModel
         $this->run_before_save();
         $values = array_intersect_key($this->attributes, array_flip(array_keys($this->modified_fields)), array_flip(self::get_db_fields()));
         try {
-            if ($is_new_record)
-            {
-                App::$db->insert(table: self::table_name(), values: $values);
-                $this->id = App::$db->connection->lastInsertId();
-            } else {
-                App::$db->update(table: self::table_name(), fields: array_keys($values), values: $values, where_conditions: array("id=$this->id"));
+            if (count($this->modified_fields) > 0) {
+                if ($is_new_record) {
+                    App::$db->insert(table: self::table_name(), values: $values);
+                    $this->attributes['id'] = App::$db->connection->lastInsertId();
+                } else {
+                    App::$db->update(table: self::table_name(), fields: array_keys($values), values: $values, where_conditions: array("id=$this->id"));
+                }
+                $this->clear_modified_fields();
             }
-            $this->clear_modified_fields();
         } catch (PDOException $e) {
             if ($exception) { throw $e; }
             return false;
@@ -225,9 +240,7 @@ abstract class BaseModel
             }
             $class_name = self::model_name();
             $obj = new $class_name();
-            foreach ($data as $column => $value) {
-                $obj->{$column} = $value;
-            }
+            $obj->load_from_attributes($data);
             return $obj;
         }
         return null;
@@ -245,9 +258,7 @@ abstract class BaseModel
         $class_name = get_called_class();
         $class = new $class_name();
 
-        foreach ($attributes as $attr => $value) {
-            $class->{$attr} = $value;
-        }
+        $class->load_from_attributes($attributes);
         $class->save_internal($exception);
         return $class;
     }
@@ -261,9 +272,7 @@ abstract class BaseModel
         $class_name = get_called_class();
         $class = new $class_name();
         // Assign attributes
-        foreach ($attributes as $attr => $value) {
-            $class->{$attr} = $value;
-        }
+        $class->load_from_attributes($attributes);
         return $class;
     }
 

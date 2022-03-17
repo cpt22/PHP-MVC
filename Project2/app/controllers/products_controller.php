@@ -13,24 +13,19 @@ class ProductsController
     public function show() {
         $GLOBALS['product'] = Product::find($_REQUEST['id']);
         echo "<pre>";
-        //$tmp = Product::new(["name" => "my big dog", "quantity" => 85738957]);
-        //print_r($tmp);
-        //print_r($tmp::get_db_fields());
-        //$tmp->save(exception: true);
 
-        $tmp = Product::find(12);
-        $tmp->save(exception: true);
-
-        $t = Product::create(["name" => "Will", "quantity" => 400]);
-        print_r($t);
-        $t->name = "Will 2";
-        print_r($t);
-        $t->save();
-
-        print_r(Product::all()->where(["id=:id"], ["id" => $t->id]));
-        //print_r($tmp->users);
-        //print_r($tmp);
-        //print_r(Product::find(95));
+        $p = Product::find(1);
+        $u = User::find(1);
+        $products = $u->products;
+        //print_r($products->load());
+        $names = $products->includes(['user'])->pluck(['id']);
+        print_r($names->load());
+        $limited = $names->limit(1);
+        print_r($limited->load());
+        //print_r($products->load());
+        //$names = $products->pluck(["name"]);
+        //print_r($products->load());
+        $u->save();
         echo "</pre>";
     }
 

@@ -24,14 +24,12 @@ class CollectionProxy implements ArrayAccess, Iterator {
     private string $query = "";
 
     private DB $db;
-    private ObjectStore $store;
 
     public function __construct($table_name, $model_name)
     {
         $this->table_name = $table_name;
         $this->model_name = $model_name;
         $this->db = App::$db;
-        $this->store = App::$store;
     }
 
     public function __toString(): string {
@@ -57,6 +55,13 @@ class CollectionProxy implements ArrayAccess, Iterator {
         return isset($this->data[$key]);
     }
 
+    private function make_copy(): CollectionProxy {
+        $copy = clone $this;
+        $copy->data = [];
+        $copy->hasLoaded = false;
+        return $copy;
+    }
+
     private function get_values(): mixed {
         $this->load_if_needed();
         if ($this->count) {
@@ -65,57 +70,66 @@ class CollectionProxy implements ArrayAccess, Iterator {
         return $this->data;
     }
 
+
+
     public function where(array $conditions, array $values = []): CollectionProxy
     {
-        $this->wheres['conditions'] = array_merge($this->wheres['conditions'], $conditions);
-        $this->wheres['values'] = array_merge($this->wheres['values'], $values);
-        $this->construct_query();
-        return $this;
+        $copy = $this->make_copy();
+        $copy->wheres['conditions'] = array_merge($copy->wheres['conditions'], $conditions);
+        $copy->wheres['values'] = array_merge($copy->wheres['values'], $values);
+        $copy->construct_query();
+        return $copy;
     }
 
     public function group(string $group): CollectionProxy
     {
-        $this->groups[] = $group;
-        $this->construct_query();
-        return $this;
+        $copy = $this->make_copy();
+        $copy->groups[] = $group;
+        $copy->construct_query();
+        return $copy;
     }
 
     public function order(string $order): CollectionProxy
     {
-        $this->orders[] = $order;
-        $this->construct_query();
-        return $this;
+        $copy = $this->make_copy();
+        $copy->orders[] = $order;
+        $copy->construct_query();
+        return $copy;
     }
 
     public function limit(int $limit): CollectionProxy
     {
-        $this->limit = $limit;
-        $this->construct_query();
-        return $this;
+        $copy = $this->make_copy();
+        $copy->limit = $limit;
+        $copy->construct_query();
+        return $copy;
     }
 
     public function includes(array $models): CollectionProxy
     {
+        $copy = $this->make_copy();
         foreach($models as $model)
         {
-            $this->includes[] = $model;
+            $copy->includes[] = $model;
         }
-        $this->construct_query();
-        return $this;
+        $copy->construct_query();
+        return $copy;
     }
 
     public function pluck(array $fields): CollectionProxy
     {
-        $this->fields = array_merge($fields);
-        $this->construct_query();
-        return $this;
+        $copy = $this->make_copy();
+        $copy->fields = array_merge($fields);
+        $copy->construct_query();
+        return $copy;
     }
 
     public function count(): CollectionProxy
     {
-        $this->count = true;
-        $this->construct_query();
-        return $this;
+        $copy = $this->make_copy();
+        $copy->count = true;
+        $copy->construct_query();
+        return $copy;
     }
 
     public function load_if_needed(): CollectionProxy
@@ -174,18 +188,18 @@ class CollectionProxy implements ArrayAccess, Iterator {
         $this->hasLoaded = false;
         // Create fields
         $fields = "";
+        $tmp_fields = array_map(fn($val) => "$this->table_name.$val", $this->fields);
         if ($this->count)
         {
             $fields = "COUNT(*)";
         } else {
-            if (empty($this->fields))
+            if (empty($tmp_fields))
             {
                 $fields = "*";
             } else {
-                $fields = join(',', $this->fields);
+                $fields = join(',', $tmp_fields);
             }
         }
-
 
         $model_tables = [];
         foreach ($this->includes as $include)
