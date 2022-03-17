@@ -205,9 +205,9 @@ abstract class BaseModel
      * @param mixed $value
      * @return mixed|null
      */
-    public static function find(mixed $value): mixed
+    public static function find(mixed $value, bool $exception = false): mixed
     {
-        return self::find_by(value: $value);
+        return self::find_by(value: $value, exception: $exception);
     }
 
     /**
@@ -215,7 +215,7 @@ abstract class BaseModel
      * @param string $attribute
      * @return mixed|object|null
      */
-    public static function find_by(mixed $value, string $attribute = "id"): mixed
+    public static function find_by(mixed $value, string $attribute = "id", bool $exception = false): mixed
     {
         if (is_array($value)) {
             return null;
@@ -243,6 +243,7 @@ abstract class BaseModel
             $obj->load_from_attributes($data);
             return $obj;
         }
+        if ($exception) { throw new RecordNotFoundException(self::model_name() . " with $attribute=$value could not be found."); }
         return null;
     }
 

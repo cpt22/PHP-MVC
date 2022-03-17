@@ -1,12 +1,12 @@
 <?php
 $DEFAULT_ROUTE = "index";
 
-resource(name: "products", options: [
-    "collection" => [
-        "stats" => ["get", "put"]
+resource(name: "products", only: ['index', 'new', 'show', 'edit'], options: [
+    'collection' => [
+        'stats' => ['get', 'put']
     ],
-    "member" => [
-        "tmp" => "post"
+    'member' => [
+        'tmp' => 'post'
     ]
 ]);
 ?>

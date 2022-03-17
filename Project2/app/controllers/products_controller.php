@@ -11,28 +11,17 @@ class ProductsController
     }
 
     public function show() {
-        $GLOBALS['product'] = Product::find($_REQUEST['id']);
+        $GLOBALS['product'] = Product::find($_REQUEST['id'], exception: true);
         echo "<pre>";
-
-        $p = Product::find(1);
-        $u = User::find(1);
-        $products = $u->products;
-        //print_r($products->load());
-        $names = $products->includes(['user'])->pluck(['id']);
-        //print_r($names->load());
-        $limited = $names->limit(1);
-        //print_r($limited->load());
-        //print_r($limited->count());
-        //print_r($products->count);
-        //print_r($products->load());
-        //$names = $products->pluck(["name"]);
-        //print_r($products->load());
-        $u->save();
         echo "</pre>";
     }
 
     public function new() {
         $p = Product::create(["name" => "my dog cat", "quantity" => 45]);
         print_r($p);
+    }
+
+    public function edit() {
+        $GLOBALS['product'] = Product::find($_REQUEST['id'], exception: true);
     }
 }

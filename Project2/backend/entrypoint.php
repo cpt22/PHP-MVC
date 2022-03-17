@@ -9,7 +9,7 @@ require_once BACKEND_BASE . 'app.php';
 App::init();
 
 // Load all relevant php files in backend
-$BACKEND_FOLDERS_TO_LOAD = array("db", "helpers", "rendering", "util", "traits", "base_classes");
+$BACKEND_FOLDERS_TO_LOAD = array("db", "helpers", "rendering", "util", "traits", "base_classes", "exceptions");
 foreach ($BACKEND_FOLDERS_TO_LOAD as $folder) {
     recursive_load($BACKEND_BASE . $folder);
 }

@@ -3,47 +3,47 @@ use JetBrains\PhpStorm\NoReturn;
 
 $BLANK_PATH_ROUTE = "BLANK_PATH_ROUTE";
 $DEFAULT_RESOURCE_ROUTES = [
-    "index" => [
-        "path" => $BLANK_PATH_ROUTE,
-        "method" => "get",
-        "action" => "index",
-        "type" => "collection"
+    'index' => [
+        'path' => $BLANK_PATH_ROUTE,
+        'method' => 'get',
+        'action' => 'index',
+        'type' => 'collection'
     ],
-    "new" => [
-        "path" => "new",
-        "method" => "get",
-        "action" => "new",
-        "type" => "collection"
+    'new' => [
+        'path' => 'new',
+        'method' => 'get',
+        'action' => 'new',
+        'type' => 'collection'
     ],
-    "create" => [
-        "path" => $BLANK_PATH_ROUTE,
-        "method" => "post",
-        "action" => "create",
-        "type" => "collection"
+    'create' => [
+        'path' => $BLANK_PATH_ROUTE,
+        'method' => 'post',
+        'action' => 'create',
+        'type' => 'collection'
     ],
-    "show" => [
-        "path" => $BLANK_PATH_ROUTE,
-        "method" => "get",
-        "action" => "show",
-        "type" => "member"
+    'show' => [
+        'path' => $BLANK_PATH_ROUTE,
+        'method' => 'get',
+        'action' => 'show',
+        'type' => 'member'
     ],
-    "edit" => [
-        "path" => "edit",
-        "method" => "get",
-        "action" => "edit",
-        "type" => "member"
+    'edit' => [
+        'path' => 'edit',
+        'method' => 'get',
+        'action' => 'edit',
+        'type' => 'member'
     ],
-    "update" => [
-        "path" => $BLANK_PATH_ROUTE,
-        "method" => "patch",
-        "action" => "update",
-        "type" => "member"
+    'update' => [
+        'path' => $BLANK_PATH_ROUTE,
+        'method' => 'patch',
+        'action' => 'update',
+        'type' => 'member'
     ],
-    "delete" => [
-        "path" => $BLANK_PATH_ROUTE,
-        "method" => "delete",
-        "action" => "delete",
-        "type" => "member"
+    'delete' => [
+        'path' => $BLANK_PATH_ROUTE,
+        'method' => 'delete',
+        'action' => 'delete',
+        'type' => 'member'
     ]
 ];
 
