@@ -1,3 +1,4 @@
 RewriteEngine on
 #RewriteRule ^(.*)$ 404.html [NC,L,QSA]
+#RewriteRule ^(/static.*)$ app/static
 RewriteRule ^([^\.]*)$ backend/entrypoint.php [NC,L,QSA]

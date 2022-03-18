@@ -68,7 +68,38 @@ class Router {
     }
 
     public function  __call($name, $arguments) {
-        echo "$name was called in router";
+        if (str_ends_with($name, "_path")) {
+            $name = substr($name, 0 , strlen($name) - 5);
+            $name_components = explode('_', $name);
+            $len = count($name_components);
+            if ($len < 1) { return ""; }
+            $obj_name = "";
+            $counter = $len - 1;
+            while (!array_key_exists($obj_name, $this->routes) && $counter >= 0) {
+                $obj_name = Inflector::pluralize(join('_', array_slice($name_components, $counter)));
+                $counter--;
+                if ($counter < 0) {
+                    throw new Exception("Route not found");
+                }
+            }
+            $block = $this->routes[$obj_name];
+            $action = join('_', array_slice($name_components, 0, $counter + 1)) ?? $this->blank_path_route;
+            $type = (count($arguments) > 0) ? "member" : "collection";
+            $block = $block[$type];
+            $route_component = "";
+            foreach ($block as $path => $actions) {
+                if (!empty(array_search($action, $actions))) {
+                    $route_component = $path;
+                }
+            }
+            $path = App::$config->site_base_path . "$obj_name/";
+            if ($type == "member") {
+                $path .= $arguments[0]->id . "/";
+            }
+            $path .= "$route_component";
+            return $path;
+
+        }
     }
 
     /**
@@ -131,7 +162,8 @@ class Router {
     
     public function route()
     {
-        $uri_components = $this->get_components($_SERVER['REDIRECT_URL']);
+        $url = rtrim($_SERVER['REDIRECT_URL'],"/");
+        $uri_components = $this->get_components($url);
 
 
         // Check if the route is defined.
@@ -167,7 +199,7 @@ class Router {
         $sr_block = $route_block[$sub_route];
 
         // Check if the request method is defined for that route.
-        $method = strtolower($_POST['REQUEST_METHOD'] ?? $_SERVER['REQUEST_METHOD']);
+        $method = strtolower($_REQUEST['REQUEST_METHOD'] ?? $_SERVER['REQUEST_METHOD']);
         if (!array_key_exists($method, $sr_block)) {
             App::$logger->log_error(code: 404, message: "Method not supported for route $route/$sub_route");
         }

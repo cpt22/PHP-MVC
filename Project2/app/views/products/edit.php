@@ -1,7 +1,8 @@
 <?php
 $product = $GLOBALS['product'];
-form_for(object: $product, method: "post", do: function($form) {
+form_for(object: $product, url: App::$router->update_product_path($product), method: "patch", do: function($form) use ($product) {
     $form->label(for: "name");
-    $form->text_field("name", class: "form-control", html_options: [], maxlength: "10");
+    $form->password_field("quantity", class: "form-control", maxlength: "10");
+    $form->submit();
 });
 ?>
