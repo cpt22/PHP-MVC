@@ -67,6 +67,10 @@ class Router {
         $this->default_route = $DEFAULT_ROUTE;
     }
 
+    public function  __call($name, $arguments) {
+        echo "$name was called in router";
+    }
+
     /**
      * @param string $name
      * @param array $except
