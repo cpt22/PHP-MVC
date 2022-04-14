@@ -1,7 +1,8 @@
 <?php
 $SELECTED_LAYOUT = "template";
 
-class IndexController extends Controller {
+class IndexController extends ApplicationController
+{
     public function __construct() {
 
     }

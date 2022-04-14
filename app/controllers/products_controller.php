@@ -1,6 +1,6 @@
 <?php
 
-class ProductsController
+class ProductsController extends ApplicationController
 {
     public function __construct() {
 

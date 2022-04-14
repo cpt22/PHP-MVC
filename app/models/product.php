@@ -1,5 +1,5 @@
 <?php
-class Product extends BaseModel
+class Product extends ApplicationModel
 {
     protected function setup()
     {
